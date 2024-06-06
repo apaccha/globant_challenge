@@ -1,0 +1,153 @@
+{
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "triggers": {
+        "When_a_HTTP_request_is_received": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "method": "PUT",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "destination_table": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "job": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "job"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": {
+        "Response": {
+          "type": "Response",
+          "kind": "Http",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "input": "@triggerBody()?['data']",
+              "status": "@variables('results')"
+            }
+          },
+          "runAfter": {
+            "For_each": [
+              "Succeeded"
+            ]
+          }
+        },
+        "For_each": {
+          "type": "Foreach",
+          "foreach": "@triggerBody()?['data']",
+          "actions": {
+            "Insert_row_(V2)": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['sql']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": "@items('For_each')",
+                "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('default'))},@{encodeURIComponent(encodeURIComponent('default'))}/tables/@{encodeURIComponent(encodeURIComponent(triggerBody()?['destination_table']))}/items"
+              }
+            },
+            "Append_to_array_variable": {
+              "type": "AppendToArrayVariable",
+              "inputs": {
+                "name": "results",
+                "value": {
+                  "item": "@items('For_each')",
+                  "status": "@body('Insert_row_(V2)')"
+                }
+              },
+              "runAfter": {
+                "Insert_row_(V2)": [
+                  "Succeeded",
+                  "Failed",
+                  "TimedOut",
+                  "Skipped"
+                ]
+              }
+            },
+            "Insert_row_(V2)_1": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['sql']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": {
+                  "error": "{\"destination_table\":\"@{triggerBody()?['destination_table']}\",\"item\":@{items('For_each')}}"
+                },
+                "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('default'))},@{encodeURIComponent(encodeURIComponent('default'))}/tables/@{encodeURIComponent(encodeURIComponent('insert_errors'))}/items"
+              },
+              "runAfter": {
+                "Insert_row_(V2)": [
+                  "Failed",
+                  "Skipped",
+                  "TimedOut"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Initialize_variable": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "results",
+                "type": "array"
+              }
+            ]
+          },
+          "runAfter": {}
+        }
+      },
+      "outputs": {},
+      "parameters": {
+        "$connections": {
+          "type": "Object",
+          "defaultValue": {}
+        }
+      }
+    },
+    "parameters": {
+      "$connections": {
+        "value": {
+          "sql": {
+            "id": "/subscriptions/1354ac25-f198-40b9-a059-f348dec0c145/providers/Microsoft.Web/locations/eastus/managedApis/sql",
+            "connectionId": "/subscriptions/1354ac25-f198-40b9-a059-f348dec0c145/resourceGroups/Globant_challenge/providers/Microsoft.Web/connections/sql",
+            "connectionName": "sql"
+          }
+        }
+      }
+    }
+  }
