@@ -1,0 +1,24 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "globant-challenge-df"
+		},
+		"AzureSqlDatabase1_password": {
+			"value": ""
+		},
+		"gobantchallengesa_connectionString": {
+			"value": ""
+		},
+		"AzureSqlDatabase1_properties_typeProperties_server": {
+			"value": "globant-challenge-db-server.database.windows.net"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_database": {
+			"value": "globant_challenge_db"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_userName": {
+			"value": "challenge_admin"
+		}
+	}
+}
