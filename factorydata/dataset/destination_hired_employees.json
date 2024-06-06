@@ -1,5 +1,5 @@
 {
-	"name": "DestinationDataset_vtw",
+	"name": "destination_hired_employees",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureSqlDatabase1",

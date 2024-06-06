@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy_vtw",
+				"name": "Copy_hired_employees",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -104,19 +104,19 @@
 						"typeConversionSettings": {
 							"allowDataTruncation": true,
 							"treatBooleanAsNumber": false,
-							"dateTimeFormat": "yyyy-mm-ddTHH:mm:ssZ"
+							"dateTimeFormat": "yyyy-MM-ddTHH:mm:ssZ"
 						}
 					}
 				},
 				"inputs": [
 					{
-						"referenceName": "SourceDataset_vtw",
+						"referenceName": "source_hired_employees",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "DestinationDataset_vtw",
+						"referenceName": "destination_hired_employees",
 						"type": "DatasetReference"
 					}
 				]
