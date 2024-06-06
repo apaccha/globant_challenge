@@ -1,5 +1,5 @@
 {
-	"name": "SourceDataset_pd2",
+	"name": "source_departments",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "gobantchallengesa",

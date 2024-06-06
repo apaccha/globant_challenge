@@ -1,5 +1,5 @@
 {
-	"name": "DestinationDataset_pd2",
+	"name": "destination_departments",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureSqlDatabase1",

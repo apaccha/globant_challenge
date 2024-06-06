@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy_pd2",
+				"name": "Copy_departments",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -76,13 +76,13 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "SourceDataset_pd2",
+						"referenceName": "source_departments",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "DestinationDataset_pd2",
+						"referenceName": "destination_departments",
 						"type": "DatasetReference"
 					}
 				]
