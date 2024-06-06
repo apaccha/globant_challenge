@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy_mgs",
+				"name": "copy_jobs",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -37,7 +37,10 @@
 						}
 					},
 					"sink": {
-						"type": "AzureSqlSink"
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
 					},
 					"enableStaging": false,
 					"validateDataConsistency": false,
@@ -76,13 +79,13 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "SourceDataset_mgs",
+						"referenceName": "source_jobs",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "DestinationDataset_mgs",
+						"referenceName": "destination_jobs",
 						"type": "DatasetReference"
 					}
 				]

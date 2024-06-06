@@ -1,5 +1,5 @@
 {
-	"name": "DestinationDataset_mgs",
+	"name": "destination_jobs",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureSqlDatabase1",

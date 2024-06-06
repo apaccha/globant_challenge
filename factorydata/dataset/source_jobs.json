@@ -1,5 +1,5 @@
 {
-	"name": "SourceDataset_mgs",
+	"name": "source_jobs",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "gobantchallengesa",
