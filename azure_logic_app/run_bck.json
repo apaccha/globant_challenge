@@ -1,0 +1,49 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "When_a_HTTP_request_is_received": {
+                "type": "Request",
+                "kind": "Http"
+            }
+        },
+        "actions": {
+            "Create_a_pipeline_run": {
+                "runAfter": {},
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuredatafactory-1']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/subscriptions/@{encodeURIComponent('95b42fa2-56e8-468e-bd82-bb1af0d7844e')}/resourcegroups/@{encodeURIComponent('Globant_challenge')}/providers/Microsoft.DataFactory/factories/@{encodeURIComponent('globant-challenge-df')}/pipelines/@{encodeURIComponent('02_backup_tables')}/CreateRun",
+                    "queries": {
+                        "x-ms-api-version": "2017-09-01-preview"
+                    }
+                }
+            }
+        },
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "type": "Object",
+                "defaultValue": {}
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "type": "Object",
+            "value": {
+                "azuredatafactory-1": {
+                    "id": "/subscriptions/95b42fa2-56e8-468e-bd82-bb1af0d7844e/providers/Microsoft.Web/locations/eastus/managedApis/azuredatafactory",
+                    "connectionId": "/subscriptions/95b42fa2-56e8-468e-bd82-bb1af0d7844e/resourceGroups/Globant_challenge/providers/Microsoft.Web/connections/azuredatafactory-1",
+                    "connectionName": "azuredatafactory-1"
+                }
+            }
+        }
+    }
+}
