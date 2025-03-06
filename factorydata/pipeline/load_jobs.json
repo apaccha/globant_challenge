@@ -1,5 +1,5 @@
 {
-	"name": "01_load_jobs",
+	"name": "load_jobs",
 	"properties": {
 		"activities": [
 			{

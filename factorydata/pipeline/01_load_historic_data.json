@@ -1,5 +1,5 @@
 {
-	"name": "load_historic_data",
+	"name": "01_load_historic_data",
 	"properties": {
 		"activities": [
 			{
@@ -91,7 +91,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "01_load_jobs",
+						"referenceName": "load_jobs",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
