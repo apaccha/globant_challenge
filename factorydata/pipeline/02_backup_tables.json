@@ -1,5 +1,5 @@
 {
-	"name": "backup_tables",
+	"name": "02_backup_tables",
 	"properties": {
 		"activities": [
 			{
