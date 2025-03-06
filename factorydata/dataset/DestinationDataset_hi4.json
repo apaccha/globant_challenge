@@ -1,0 +1,27 @@
+{
+	"name": "DestinationDataset_hi4",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "gobantchallengesa",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"cw_fileName": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "Avro",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().cw_fileName",
+					"type": "Expression"
+				},
+				"container": "backup"
+			}
+		},
+		"schema": []
+	}
+}
