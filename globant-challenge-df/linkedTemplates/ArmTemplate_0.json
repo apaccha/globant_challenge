@@ -69,6 +69,61 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DestinationDataset_4i2')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"table_name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "name",
+						"type": "varchar"
+					},
+					{
+						"name": "datetime",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "department_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "job_id",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DestinationDataset_hi4')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -99,6 +154,71 @@
 					}
 				},
 				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/gobantchallengesa')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceDataset_4i2')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "gobantchallengesa",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Avro",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "dbo.hired_employees.avro",
+						"folderPath": "2025-03-06 03:03:27",
+						"container": "backup"
+					}
+				},
+				"schema": {
+					"type": "record",
+					"name": "HybridDelivery.ClientLibraryJob",
+					"fields": [
+						{
+							"name": "id",
+							"type": [
+								"int",
+								"null"
+							]
+						},
+						{
+							"name": "name",
+							"type": [
+								"string",
+								"null"
+							]
+						},
+						{
+							"name": "datetime",
+							"type": [
+								"string",
+								"null"
+							]
+						},
+						{
+							"name": "department_id",
+							"type": [
+								"int",
+								"null"
+							]
+						},
+						{
+							"name": "job_id",
+							"type": [
+								"int",
+								"null"
+							]
+						}
+					]
+				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/gobantchallengesa')]"
@@ -472,6 +592,183 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/source_jobs')]",
 				"[concat(variables('factoryId'), '/datasets/destination_jobs')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/01_restore_tables')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.cw_items",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "insert",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Truncate",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AvroSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": false,
+												"wildcardFolderPath": {
+													"value": "@pipeline().parameters.folder",
+													"type": "Expression"
+												},
+												"wildcardFileName": {
+													"value": "@item().source.fileName",
+													"type": "Expression"
+												},
+												"enablePartitionDiscovery": false
+											}
+										},
+										"sink": {
+											"type": "AzureSqlSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": true,
+											"disableMetricsCollection": false
+										},
+										"enableStaging": false,
+										"dataIntegrationUnits": 4,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SourceDataset_4i2",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DestinationDataset_4i2",
+											"type": "DatasetReference",
+											"parameters": {
+												"table_name": {
+													"value": "@item().destination.table",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Truncate",
+									"type": "Script",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabase1",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": {
+													"value": "@concat('truncate table ',item().destination.table)",
+													"type": "Expression"
+												}
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"cw_items": {
+						"type": "array",
+						"defaultValue": [
+							{
+								"destination": {
+									"table": "departments"
+								},
+								"source": {
+									"fileName": "dbo.departments.avro"
+								}
+							},
+							{
+								"destination": {
+									"table": "hired_employees"
+								},
+								"source": {
+									"fileName": "dbo.hired_employees.avro"
+								}
+							},
+							{
+								"destination": {
+									"table": "insert_errors"
+								},
+								"source": {
+									"fileName": "dbo.insert_errors.avro"
+								}
+							},
+							{
+								"destination": {
+									"table": "jobs"
+								},
+								"source": {
+									"fileName": "dbo.jobs.avro"
+								}
+							}
+						]
+					},
+					"folder": {
+						"type": "string",
+						"defaultValue": "2025-03-06 03:03:27"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SourceDataset_4i2')]",
+				"[concat(variables('factoryId'), '/datasets/DestinationDataset_4i2')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
 			]
 		},
 		{
