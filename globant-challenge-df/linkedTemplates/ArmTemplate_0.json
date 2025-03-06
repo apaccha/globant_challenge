@@ -44,7 +44,6 @@
 					"database": "[parameters('AzureSqlDatabase1_properties_typeProperties_database')]",
 					"encrypt": "mandatory",
 					"trustServerCertificate": false,
-					"hostNameInCertificate": "",
 					"authenticationType": "SQL",
 					"userName": "[parameters('AzureSqlDatabase1_properties_typeProperties_userName')]",
 					"password": {
@@ -344,7 +343,10 @@
 								}
 							},
 							"sink": {
-								"type": "AzureSqlSink"
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": true,
+								"disableMetricsCollection": false
 							},
 							"enableStaging": false,
 							"validateDataConsistency": false,
@@ -448,7 +450,10 @@
 								}
 							},
 							"sink": {
-								"type": "AzureSqlSink"
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": true,
+								"disableMetricsCollection": false
 							},
 							"enableStaging": false,
 							"validateDataConsistency": false,
@@ -588,7 +593,7 @@
 							"sink": {
 								"type": "AzureSqlSink",
 								"writeBehavior": "insert",
-								"sqlWriterUseTableLock": false,
+								"sqlWriterUseTableLock": true,
 								"disableMetricsCollection": false
 							},
 							"enableStaging": false,
