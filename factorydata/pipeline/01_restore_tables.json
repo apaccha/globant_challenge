@@ -3,124 +3,6 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy_4i2",
-				"type": "Copy",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [
-					{
-						"name": "Source",
-						"value": "backup/2025-03-06 03:03:27/dbo.hired_employees.avro"
-					},
-					{
-						"name": "Destination",
-						"value": "dbo.hired_employees"
-					}
-				],
-				"typeProperties": {
-					"source": {
-						"type": "AvroSource",
-						"storeSettings": {
-							"type": "AzureBlobStorageReadSettings",
-							"recursive": false,
-							"enablePartitionDiscovery": false
-						}
-					},
-					"sink": {
-						"type": "AzureSqlSink",
-						"writeBehavior": "insert",
-						"sqlWriterUseTableLock": true,
-						"disableMetricsCollection": false
-					},
-					"enableStaging": false,
-					"validateDataConsistency": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"mappings": [
-							{
-								"source": {
-									"name": "id",
-									"type": "int | null",
-									"physicalType": "int | null"
-								},
-								"sink": {
-									"name": "id",
-									"type": "Int32",
-									"physicalType": "int"
-								}
-							},
-							{
-								"source": {
-									"name": "name",
-									"type": "string | null"
-								},
-								"sink": {
-									"name": "name",
-									"type": "String",
-									"physicalType": "varchar"
-								}
-							},
-							{
-								"source": {
-									"name": "datetime",
-									"type": "string | null"
-								},
-								"sink": {
-									"name": "datetime",
-									"type": "DateTime",
-									"physicalType": "datetime"
-								}
-							},
-							{
-								"source": {
-									"name": "department_id",
-									"type": "int | null"
-								},
-								"sink": {
-									"name": "department_id",
-									"type": "Int32",
-									"physicalType": "int"
-								}
-							},
-							{
-								"source": {
-									"name": "job_id",
-									"type": "int | null"
-								},
-								"sink": {
-									"name": "job_id",
-									"type": "Int32",
-									"physicalType": "int"
-								}
-							}
-						],
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "SourceDataset_4i2",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "DestinationDataset_4i2",
-						"type": "DatasetReference"
-					}
-				]
-			},
-			{
 				"name": "ForEach1",
 				"type": "ForEach",
 				"dependsOn": [],
@@ -132,9 +14,16 @@
 					},
 					"activities": [
 						{
-							"name": "Copy data1",
+							"name": "insert",
 							"type": "Copy",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "Truncate",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -195,6 +84,35 @@
 									}
 								}
 							]
+						},
+						{
+							"name": "Truncate",
+							"type": "Script",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": {
+											"value": "@concat('truncate table ',item().destination.table)",
+											"type": "Expression"
+										}
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
 						}
 					]
 				}
