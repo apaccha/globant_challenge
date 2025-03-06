@@ -595,7 +595,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/01_restore_tables')]",
+			"name": "[concat(parameters('factoryName'), '/03_restore_tables')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
