@@ -1,0 +1,60 @@
+{
+	"name": "SourceDataset_4i2",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "gobantchallengesa",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Avro",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "dbo.hired_employees.avro",
+				"folderPath": "2025-03-06 03:03:27",
+				"container": "backup"
+			}
+		},
+		"schema": {
+			"type": "record",
+			"name": "HybridDelivery.ClientLibraryJob",
+			"fields": [
+				{
+					"name": "id",
+					"type": [
+						"int",
+						"null"
+					]
+				},
+				{
+					"name": "name",
+					"type": [
+						"string",
+						"null"
+					]
+				},
+				{
+					"name": "datetime",
+					"type": [
+						"string",
+						"null"
+					]
+				},
+				{
+					"name": "department_id",
+					"type": [
+						"int",
+						"null"
+					]
+				},
+				{
+					"name": "job_id",
+					"type": [
+						"int",
+						"null"
+					]
+				}
+			]
+		}
+	}
+}
