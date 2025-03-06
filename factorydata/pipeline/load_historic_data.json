@@ -91,7 +91,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "load_jobs",
+						"referenceName": "01_load_jobs",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
