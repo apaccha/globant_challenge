@@ -33,14 +33,14 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/01_load_jobs')]",
+			"name": "[concat(parameters('factoryName'), '/01_load_historic_data')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "copy_jobs",
-						"type": "Copy",
+						"name": "truncate_tables",
+						"type": "Script",
 						"dependsOn": [],
 						"policy": {
 							"timeout": "0.12:00:00",
@@ -49,84 +49,92 @@
 							"secureOutput": false,
 							"secureInput": false
 						},
-						"userProperties": [
-							{
-								"name": "Source",
-								"value": "historic-data//jobs.csv"
-							},
-							{
-								"name": "Destination",
-								"value": "dbo.jobs"
-							}
-						],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": false,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings",
-									"skipLineCount": 0
-								}
-							},
-							"sink": {
-								"type": "AzureSqlSink",
-								"writeBehavior": "insert",
-								"sqlWriterUseTableLock": true,
-								"disableMetricsCollection": false
-							},
-							"enableStaging": false,
-							"validateDataConsistency": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"type": "String",
-											"ordinal": 1
-										},
-										"sink": {
-											"name": "id",
-											"type": "Int32",
-											"physicalType": "int"
-										}
-									},
-									{
-										"source": {
-											"type": "String",
-											"ordinal": 2
-										},
-										"sink": {
-											"name": "job",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "AzureSqlDatabase1",
+							"type": "LinkedServiceReference"
 						},
-						"inputs": [
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "truncate table hired_employees;\r\ntruncate table departments;\r\ntruncate table jobs;"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "load_hired_employees",
+						"type": "ExecutePipeline",
+						"dependsOn": [
 							{
-								"referenceName": "source_jobs",
-								"type": "DatasetReference",
-								"parameters": {}
+								"activity": "truncate_tables",
+								"dependencyConditions": [
+									"Succeeded"
+								]
 							}
 						],
-						"outputs": [
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "load_hired_employees",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "load_departments",
+						"type": "ExecutePipeline",
+						"dependsOn": [
 							{
-								"referenceName": "destination_jobs",
-								"type": "DatasetReference",
-								"parameters": {}
+								"activity": "truncate_tables",
+								"dependencyConditions": [
+									"Succeeded"
+								]
 							}
-						]
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "load_departments",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "load_jobs",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "truncate_tables",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "load_jobs",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
 					}
 				],
 				"policy": {
@@ -135,8 +143,146 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/source_jobs')]",
-				"[concat(variables('factoryId'), '/datasets/destination_jobs')]"
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]",
+				"[concat(variables('factoryId'), '/pipelines/load_hired_employees')]",
+				"[concat(variables('factoryId'), '/pipelines/load_departments')]",
+				"[concat(variables('factoryId'), '/pipelines/load_jobs')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/02_backup_tables')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_hi4",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.cw_items",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy_hi4",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [
+										{
+											"name": "Source",
+											"value": "dbo.@{item().source.table}"
+										},
+										{
+											"name": "Destination",
+											"value": "backup//@{item().destination.fileName}"
+										}
+									],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "AvroSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											},
+											"formatSettings": {
+												"type": "AvroWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"validateDataConsistency": false,
+										"dataIntegrationUnits": 4,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SourceDataset_hi4",
+											"type": "DatasetReference",
+											"parameters": {
+												"cw_table": "@item().source.table"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DestinationDataset_hi4",
+											"type": "DatasetReference",
+											"parameters": {
+												"cw_fileName": "@item().destination.fileName"
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"cw_items": {
+						"type": "Array",
+						"defaultValue": [
+							{
+								"source": {
+									"table": "departments"
+								},
+								"destination": {
+									"fileName": "dbo.departments.avro"
+								}
+							},
+							{
+								"source": {
+									"table": "hired_employees"
+								},
+								"destination": {
+									"fileName": "dbo.hired_employees.avro"
+								}
+							},
+							{
+								"source": {
+									"table": "insert_errors"
+								},
+								"destination": {
+									"fileName": "dbo.insert_errors.avro"
+								}
+							},
+							{
+								"source": {
+									"table": "jobs"
+								},
+								"destination": {
+									"fileName": "dbo.jobs.avro"
+								}
+							}
+						]
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SourceDataset_hi4')]",
+				"[concat(variables('factoryId'), '/datasets/DestinationDataset_hi4')]"
 			]
 		},
 		{
@@ -314,142 +460,6 @@
 				"[concat(variables('factoryId'), '/datasets/SourceDataset_4i2')]",
 				"[concat(variables('factoryId'), '/datasets/DestinationDataset_4i2')]",
 				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/02_backup_tables')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "ForEach_hi4",
-						"type": "ForEach",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.cw_items",
-								"type": "Expression"
-							},
-							"activities": [
-								{
-									"name": "Copy_hi4",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [
-										{
-											"name": "Source",
-											"value": "dbo.@{item().source.table}"
-										},
-										{
-											"name": "Destination",
-											"value": "backup//@{item().destination.fileName}"
-										}
-									],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "AvroSink",
-											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings"
-											},
-											"formatSettings": {
-												"type": "AvroWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"validateDataConsistency": false,
-										"dataIntegrationUnits": 4,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "SourceDataset_hi4",
-											"type": "DatasetReference",
-											"parameters": {
-												"cw_table": "@item().source.table"
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "DestinationDataset_hi4",
-											"type": "DatasetReference",
-											"parameters": {
-												"cw_fileName": "@item().destination.fileName"
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"cw_items": {
-						"type": "Array",
-						"defaultValue": [
-							{
-								"source": {
-									"table": "departments"
-								},
-								"destination": {
-									"fileName": "dbo.departments.avro"
-								}
-							},
-							{
-								"source": {
-									"table": "hired_employees"
-								},
-								"destination": {
-									"fileName": "dbo.hired_employees.avro"
-								}
-							},
-							{
-								"source": {
-									"table": "insert_errors"
-								},
-								"destination": {
-									"fileName": "dbo.insert_errors.avro"
-								}
-							},
-							{
-								"source": {
-									"table": "jobs"
-								},
-								"destination": {
-									"fileName": "dbo.jobs.avro"
-								}
-							}
-						]
-					}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/SourceDataset_hi4')]",
-				"[concat(variables('factoryId'), '/datasets/DestinationDataset_hi4')]"
 			]
 		},
 		{
@@ -701,14 +711,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/load_historic_data')]",
+			"name": "[concat(parameters('factoryName'), '/load_jobs')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "truncate_tables",
-						"type": "Script",
+						"name": "copy_jobs",
+						"type": "Copy",
 						"dependsOn": [],
 						"policy": {
 							"timeout": "0.12:00:00",
@@ -717,92 +727,84 @@
 							"secureOutput": false,
 							"secureInput": false
 						},
-						"userProperties": [],
-						"linkedServiceName": {
-							"referenceName": "AzureSqlDatabase1",
-							"type": "LinkedServiceReference"
-						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "historic-data//jobs.csv"
+							},
+							{
+								"name": "Destination",
+								"value": "dbo.jobs"
+							}
+						],
 						"typeProperties": {
-							"scripts": [
-								{
-									"type": "Query",
-									"text": "truncate table hired_employees;\r\ntruncate table departments;\r\ntruncate table jobs;"
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": false,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings",
+									"skipLineCount": 0
 								}
-							],
-							"scriptBlockExecutionTimeout": "02:00:00"
-						}
-					},
-					{
-						"name": "load_hired_employees",
-						"type": "ExecutePipeline",
-						"dependsOn": [
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": true,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"validateDataConsistency": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"type": "String",
+											"ordinal": 1
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"type": "String",
+											"ordinal": 2
+										},
+										"sink": {
+											"name": "job",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
 							{
-								"activity": "truncate_tables",
-								"dependencyConditions": [
-									"Succeeded"
-								]
+								"referenceName": "source_jobs",
+								"type": "DatasetReference",
+								"parameters": {}
 							}
 						],
-						"policy": {
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "load_hired_employees",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					},
-					{
-						"name": "load_departments",
-						"type": "ExecutePipeline",
-						"dependsOn": [
+						"outputs": [
 							{
-								"activity": "truncate_tables",
-								"dependencyConditions": [
-									"Succeeded"
-								]
+								"referenceName": "destination_jobs",
+								"type": "DatasetReference",
+								"parameters": {}
 							}
-						],
-						"policy": {
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "load_departments",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					},
-					{
-						"name": "load_jobs",
-						"type": "ExecutePipeline",
-						"dependsOn": [
-							{
-								"activity": "truncate_tables",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "01_load_jobs",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
+						]
 					}
 				],
 				"policy": {
@@ -811,10 +813,8 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]",
-				"[concat(variables('factoryId'), '/pipelines/load_hired_employees')]",
-				"[concat(variables('factoryId'), '/pipelines/load_departments')]",
-				"[concat(variables('factoryId'), '/pipelines/01_load_jobs')]"
+				"[concat(variables('factoryId'), '/datasets/source_jobs')]",
+				"[concat(variables('factoryId'), '/datasets/destination_jobs')]"
 			]
 		},
 		{
