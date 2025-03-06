@@ -1,5 +1,5 @@
 {
-	"name": "01_restore_tables",
+	"name": "03_restore_tables",
 	"properties": {
 		"activities": [
 			{
