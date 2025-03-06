@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vulnerabilityAssessments_Default_storageContainerPath": {
+            "value": null
+        },
+        "connections_sql_name": {
+            "value": null
+        },
+        "workflows_run_bck_name": {
+            "value": null
+        },
+        "connections_azuredatafactory_name": {
+            "value": null
+        },
+        "workflows_globantchallengela_name": {
+            "value": null
+        },
+        "connections_azuredatafactory_1_name": {
+            "value": null
+        },
+        "virtualNetworks_vnet_vpn_01_name": {
+            "value": null
+        },
+        "virtualNetworkGateways_vpn01_name": {
+            "value": null
+        },
+        "publicIPAddresses_vpn_public_ip_name": {
+            "value": null
+        },
+        "servers_globant_challenge_db_server_name": {
+            "value": null
+        },
+        "storageAccounts_globantchallengesa_name": {
+            "value": null
+        }
+    }
+}
